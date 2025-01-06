@@ -35,13 +35,14 @@ if section == "Upload Data":
             st.write("### Null Values:", data.isnull().sum())
 
         # Data Cleaning
-        if st.checkbox("Clean Data"):
+ if st.checkbox("Clean Data"):
     if st.checkbox("Fill Missing Values with Mean"):
         data.fillna(data.select_dtypes(include=np.number).mean(), inplace=True)
     if st.checkbox("Drop Rows with Missing Values"):
         data.dropna(inplace=True)
     st.write("Data cleaned!")
     st.write(data.head())
+
 
         # Save data in session state
         st.session_state['data'] = data
