@@ -1,6 +1,6 @@
 
 
-# Streamlit Machine Learning App
+# Simplified Machine Learning App
 
 A simple Streamlit app for uploading datasets, training machine learning models, visualizing data, and making predictions. The app supports different machine learning models and offers data cleaning and preprocessing functionality, along with various types of visualizations.
 
