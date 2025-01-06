@@ -68,15 +68,6 @@ The project directory contains the following files:
 3. Train a machine learning model on the dataset (e.g., Random Forest, Linear Regression).
 4. After training, save the model and use it to make predictions on new data.
 
-## Demo
-
-You can try a live demo of the app by visiting the link:  
-[Demo Link](http://example.com) *(Replace with your actual demo URL)*
-
-## License
-
-This project is open-source and available under the MIT License.
-
 ## Acknowledgements
 
 - [Streamlit](https://streamlit.io/) for making it easy to build interactive apps.
@@ -86,5 +77,5 @@ This project is open-source and available under the MIT License.
 ---
 ## Demo App
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
+[![Streamlit App](https://automate-ml-model.streamlit.app/?embed_options=dark_theme,show_padding,show_colored_line,show_footer)
 
