@@ -118,16 +118,23 @@ if section == "Data Visualization":
 
 
 if st.button("Train Model"):
-    # Ensure input data is clean and consistent
-    from sklearn.compose import ColumnTransformer
-    from sklearn.pipeline import Pipeline
-    from sklearn.preprocessing import StandardScaler, OneHotEncoder
-    from sklearn.impute import SimpleImputer
+    # Select the target column
+    target_col = st.selectbox("Select Target Column", data.columns)
+    X = data.drop(columns=[target_col])  # Feature matrix
+    y = data[target_col]                # Target variable
 
-    # Preprocess data: handle categorical and numerical columns separately
+    # Handle missing values in X
+    X = X.fillna(method="ffill")  # Forward fill for simplicity (can be customized)
+
+    # Separate numeric and categorical features
     numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
-    categorical_features = X.select_dtypes(include=["object"]).columns
+    categorical_features = X.select_dtypes(include=["object", "category"]).columns
 
+    st.write("### Feature Summary")
+    st.write("Numeric Features:", numeric_features)
+    st.write("Categorical Features:", categorical_features)
+
+    # Define preprocessing pipelines
     numeric_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='mean')),
         ('scaler', StandardScaler())])
@@ -141,11 +148,14 @@ if st.button("Train Model"):
             ('num', numeric_transformer, numeric_features),
             ('cat', categorical_transformer, categorical_features)])
 
-    # Apply preprocessor to training data
+    # Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Preprocess the data
     X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
 
-    # Train the model
+    # Train the selected model
     model.fit(X_train_processed, y_train)
 
     # Make predictions
@@ -160,6 +170,7 @@ if st.button("Train Model"):
         accuracy = accuracy_score(y_test, y_pred)
         st.write("### Evaluation Metrics (Classification)")
         st.write(f"Accuracy: {accuracy:.3f}")
+
 
 
 if section == "Make Predictions":
