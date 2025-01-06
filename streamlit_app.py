@@ -117,7 +117,9 @@ if section == "Data Visualization":
         st.warning("Please upload and clean the data in the 'Upload Data' section first!")
 
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.impute import SimpleImputer
 
 if section == "Train Model":
@@ -130,14 +132,30 @@ if section == "Train Model":
         X = data.drop(columns=[target_col])
         y = data[target_col]
 
-        # Handle missing values
-        imputer = SimpleImputer(strategy='mean')  # Replace missing values with mean
-        X = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+        # Identify numeric and categorical columns
+        numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns
+        categorical_cols = X.select_dtypes(include=['object', 'category']).columns
 
-        # Encode categorical features
-        for col in X.select_dtypes(include=['object', 'category']).columns:
-            le = LabelEncoder()
-            X[col] = le.fit_transform(X[col])
+        # Define preprocessing for numeric and categorical features
+        numeric_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy='mean'))  # Replace missing values with mean
+        ])
+
+        categorical_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy='most_frequent')),  # Replace missing values with the most frequent value
+            ('onehot', OneHotEncoder(handle_unknown='ignore'))  # Encode categorical features
+        ])
+
+        # Combine preprocessors in a column transformer
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', numeric_transformer, numeric_cols),
+                ('cat', categorical_transformer, categorical_cols)
+            ]
+        )
+
+        # Apply preprocessing
+        X = preprocessor.fit_transform(X)
 
         # Encode target column if it's categorical
         if y.dtype == 'object' or isinstance(y, pd.CategoricalDtype):
@@ -181,6 +199,7 @@ if section == "Train Model":
             st.success("Model trained and saved!")
     else:
         st.warning("Upload data first!")
+
 
 
 if section == "Evaluate Model":
