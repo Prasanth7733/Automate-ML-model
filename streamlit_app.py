@@ -43,7 +43,7 @@ if section == "Data Visualization":
     if 'data' in st.session_state:
         st.header("Data Visualization")
         data = st.session_state['data']
-        plot_type = st.selectbox("Choose Plot Type", ["Scatter Plot", "Histogram", "Correlation Heatmap", "Pairplot"])
+        plot_type = st.selectbox("Choose Plot Type", ["Scatter Plot", "Histogram", "Correlation Heatmap", "Pairplot","Boxplot"])
         
         if plot_type == "Scatter Plot":
             x_col = st.selectbox("X-Axis", data.columns)
@@ -66,6 +66,11 @@ if section == "Data Visualization":
         elif plot_type == "Pairplot":
             plt.figure(figsize=(10, 6))
             sns.pairplot(data)
+            st.pyplot(plt)
+        elif plot_type == "Box Plot":
+            col = st.selectbox("Select Column", data.columns)
+            plt.figure(figsize=(10, 6))
+            sns.boxplot(data=data[col])
             st.pyplot(plt)
             
     else:
