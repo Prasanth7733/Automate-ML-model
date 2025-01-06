@@ -93,7 +93,6 @@ if section == "Train Model":
 
         # Preprocessing
         if st.checkbox("Standardize Features"):
-            # Select only numeric columns for scaling
             numeric_cols = X.select_dtypes(include=np.number).columns
             non_numeric_cols = X.select_dtypes(exclude=np.number).columns
 
@@ -102,9 +101,9 @@ if section == "Train Model":
                 X[numeric_cols] = scaler.fit_transform(X[numeric_cols])
 
             if not non_numeric_cols.empty:
-                st.warning(f"Non-numeric columns were not standardized: {list(non_numeric_cols)}")
+                st.warning(f"Non-numeric columns excluded: {list(non_numeric_cols)}")
+                X = X[numeric_cols]
 
-        # Encoding for Classification Targets
         if y.dtype == 'object':
             encoder = LabelEncoder()
             y = encoder.fit_transform(y)
@@ -112,50 +111,32 @@ if section == "Train Model":
         # Split Data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Save test data in session state for evaluation
-        st.session_state['X_test'] = X_test
-        st.session_state['y_test'] = y_test
+        # Debug Logs
+        st.write("Sample of X_train:")
+        st.write(X_train.head())
+        st.write("Sample of y_train:", y_train[:5])
 
         # Model Selection
-        model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
-                                                        "Decision Tree", "Random Forest", "Gradient Boosting"])
-        hyperparams = {}
-
-        # Hyperparameter Tuning Options
-        if model_type == "Decision Tree" or model_type == "Random Forest":
-            hyperparams['max_depth'] = st.slider("Max Depth", 1, 20, value=5)
-        if model_type == "Random Forest" or model_type == "Gradient Boosting":
-            hyperparams['n_estimators'] = st.slider("Number of Estimators", 10, 200, value=100)
-        if model_type == "Lasso" or model_type == "Ridge":
-            hyperparams['alpha'] = st.slider("Alpha", 0.01, 1.0, value=0.1)
+        model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Decision Tree", "Random Forest", "Gradient Boosting"])
 
         if st.button("Train Model"):
-            # Model Initialization
             if model_type == "Linear Regression":
                 model = LinearRegression()
             elif model_type == "Logistic Regression":
                 model = LogisticRegression()
-            elif model_type == "Ridge":
-                model = Ridge(alpha=hyperparams.get('alpha', 0.1))
-            elif model_type == "Lasso":
-                model = Lasso(alpha=hyperparams.get('alpha', 0.1))
             elif model_type == "Decision Tree":
-                model = DecisionTreeClassifier(max_depth=hyperparams.get('max_depth', 5))
+                model = DecisionTreeClassifier()
             elif model_type == "Random Forest":
-                model = RandomForestClassifier(n_estimators=hyperparams.get('n_estimators', 100), max_depth=hyperparams.get('max_depth', 5))
+                model = RandomForestClassifier()
             elif model_type == "Gradient Boosting":
-                model = GradientBoostingClassifier(n_estimators=hyperparams.get('n_estimators', 100), max_depth=hyperparams.get('max_depth', 5))
+                model = GradientBoostingClassifier()
 
-            # Train Model
             model.fit(X_train, y_train)
-
-            # Save model and type in session state
             joblib.dump(model, "trained_model.pkl")
-            st.session_state['model_type'] = model_type
-            st.success("Model trained and saved!")
-
+            st.success(f"{model_type} trained successfully!")
     else:
         st.warning("Upload data first!")
+
 
 
 
