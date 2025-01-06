@@ -1,16 +1,19 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge, Lasso
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import r2_score, accuracy_score, confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
 
-st.title("Simplified Machine Learning App")
+st.title("Enhanced Machine Learning App")
 
 # Sidebar for navigation
 st.sidebar.header("Navigation")
@@ -41,24 +44,39 @@ if section == "Data Visualization":
     if 'data' in st.session_state:
         st.header("Data Visualization")
         data = st.session_state['data']
-        plot_type = st.selectbox("Choose Plot Type", ["Scatter Plot", "Histogram", "Correlation Heatmap"])
+        plot_type = st.selectbox("Choose Plot Type", ["Scatter Plot", "Histogram", "Correlation Heatmap", "Pairplot", "Boxplot"])
+        
         if plot_type == "Scatter Plot":
             x_col = st.selectbox("X-Axis", data.columns)
             y_col = st.selectbox("Y-Axis", data.columns)
             plt.figure(figsize=(10, 6))
             sns.scatterplot(data=data, x=x_col, y=y_col)
             st.pyplot(plt)
+        
         elif plot_type == "Histogram":
             col = st.selectbox("Select Column", data.columns)
             plt.figure(figsize=(10, 6))
             sns.histplot(data[col], kde=True)
             st.pyplot(plt)
+        
         elif plot_type == "Correlation Heatmap":
             plt.figure(figsize=(10, 6))
             sns.heatmap(data.corr(), annot=True, cmap="coolwarm")
             st.pyplot(plt)
+        
+        elif plot_type == "Pairplot":
+            plt.figure(figsize=(10, 6))
+            sns.pairplot(data)
+            st.pyplot(plt)
+        
+        elif plot_type == "Boxplot":
+            col = st.selectbox("Select Column for Boxplot", data.columns)
+            plt.figure(figsize=(10, 6))
+            sns.boxplot(x=data[col])
+            st.pyplot(plt)
     else:
         st.warning("Upload data first!")
+
 if section == "Train Model":
     if 'data' in st.session_state:
         st.header("Train a Model")
@@ -68,8 +86,12 @@ if section == "Train Model":
         y = data[target_col]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
-                                                        "Decision Tree", "Random Forest"])
+                                                        "Decision Tree", "Random Forest", "SVM", "KNN", "XGBoost"])
 
+        # Hyperparameter tuning options
+        if model_type in ["Random Forest", "Decision Tree", "SVM", "KNN", "XGBoost"]:
+            tune_hyperparameters = st.checkbox("Enable Hyperparameter Tuning using GridSearchCV")
+        
         if st.button("Train Model"):
             if model_type == "Linear Regression":
                 model = LinearRegression()
@@ -83,7 +105,24 @@ if section == "Train Model":
                 model = DecisionTreeClassifier()
             elif model_type == "Random Forest":
                 model = RandomForestClassifier()
+            elif model_type == "SVM":
+                model = SVC()
+            elif model_type == "KNN":
+                model = KNeighborsClassifier()
+            elif model_type == "XGBoost":
+                model = XGBClassifier()
             
+            if tune_hyperparameters:
+                param_grid = {
+                    'n_estimators': [50, 100, 200],
+                    'max_depth': [3, 5, 7],
+                    'learning_rate': [0.01, 0.1, 0.2]
+                }
+                grid_search = GridSearchCV(model, param_grid, cv=3)
+                grid_search.fit(X_train, y_train)
+                model = grid_search.best_estimator_
+                st.write("Best Hyperparameters found:", grid_search.best_params_)
+
             model.fit(X_train, y_train)
 
             # Save the feature names (columns)
@@ -97,6 +136,14 @@ if section == "Train Model":
                 st.write("### Accuracy:", accuracy_score(y_test, y_pred))
                 st.write("### Confusion Matrix:")
                 st.write(confusion_matrix(y_test, y_pred))
+
+                # Feature importance (only for tree-based models)
+                if model_type in ["Random Forest", "Decision Tree", "XGBoost"]:
+                    feature_importance = model.feature_importances_
+                    plt.figure(figsize=(10, 6))
+                    sns.barplot(x=feature_names, y=feature_importance)
+                    plt.xticks(rotation=90)
+                    st.pyplot(plt)
 
             # Save the trained model and feature names
             joblib.dump(model, "trained_model.pkl")
@@ -152,12 +199,6 @@ if section == "Make Predictions":
                 new_data[col] = 0  # Add missing columns with default value 0
             new_data = new_data[feature_names]  # Reorder columns to match the training data
 
-            try:
-                predictions = model.predict(new_data)
-                st.write("### Predictions:")
-                st.write(predictions)
-            except Exception as e:
-                st.error(f"Error during prediction: {e}")
 
 
 
