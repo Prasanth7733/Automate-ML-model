@@ -86,7 +86,7 @@ if section == "Train Model":
         y = data[target_col]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
-                                                        "Decision Tree", "Random Forest", "SVM", "KNN", "XGBoost"])
+                                                        "Decision Tree", "Random Forest", "SVM", "KNN"])
 
         # Hyperparameter tuning options
         if model_type in ["Random Forest", "Decision Tree", "SVM", "KNN", "XGBoost"]:
@@ -109,8 +109,6 @@ if section == "Train Model":
                 model = SVC()
             elif model_type == "KNN":
                 model = KNeighborsClassifier()
-            elif model_type == "XGBoost":
-                model = XGBClassifier()
             
             if tune_hyperparameters:
                 param_grid = {
