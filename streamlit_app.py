@@ -59,18 +59,42 @@ if section == "Data Visualization":
             st.pyplot(plt)
     else:
         st.warning("Upload data first!")
-
 if section == "Train Model":
     if 'data' in st.session_state:
         st.header("Train a Model")
         data = st.session_state['data']
         target_col = st.selectbox("Select Target Column", data.columns)
         
+        # Convert date columns to datetime and extract useful features
+        date_columns = data.select_dtypes(include=['object']).columns
+        for col in date_columns:
+            try:
+                data[col] = pd.to_datetime(data[col], errors='raise')
+            except ValueError:
+                pass  # Skip non-date columns
+
+        for col in date_columns:
+            if pd.api.types.is_datetime64_any_dtype(data[col]):
+                data[f'{col}_year'] = data[col].dt.year
+                data[f'{col}_month'] = data[col].dt.month
+                data[f'{col}_day'] = data[col].dt.day
+                data[f'{col}_dayofweek'] = data[col].dt.dayofweek
+                data[f'{col}_elapsed'] = (data[col] - data[col].min()).dt.days
+                data.drop(columns=[col], inplace=True)
+
+        # One-hot encode categorical columns
+        categorical_columns = data.select_dtypes(include=['object']).columns
+        data = pd.get_dummies(data, columns=categorical_columns, drop_first=True)
+        
+        # Fill missing values in numeric columns
+        numeric_columns = data.select_dtypes(include=[np.number]).columns
+        data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
+        
         # Select features and target variable
         X = data.drop(columns=[target_col])
         y = data[target_col]
-        
-        # Convert data to NumPy arrays for model compatibility
+
+        # Convert data to NumPy arrays
         X = X.to_numpy()
         y = y.to_numpy()
 
@@ -109,6 +133,7 @@ if section == "Train Model":
                 st.error(f"Error during model training: {e}")
     else:
         st.warning("Upload data first!")
+
 
 if section == "Make Predictions":
     st.header("Make Predictions")
