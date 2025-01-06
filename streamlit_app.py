@@ -46,14 +46,16 @@ if section == "Upload Data":
     else:
         st.warning("Please upload a file to proceed!")
 
-
 if section == "Data Visualization":
-    if 'data' in st.session_state:
+    if 'data' in st.session_state:  # Check if data is available
         st.header("Data Visualization")
-        data = st.session_state['data']
+        data = st.session_state['data']  # Access the stored data
 
-        plot_type = st.selectbox("Choose Plot Type", ["Scatter Plot", "Histogram", "Correlation Heatmap", "Box Plot"])
-        
+        plot_type = st.selectbox("Choose Plot Type", [
+            "Scatter Plot", "Histogram", "Correlation Heatmap", "Box Plot",
+            "Pair Plot", "Bar Plot", "Line Plot", "Violin Plot", "Distribution Plot"
+        ])
+
         if plot_type == "Scatter Plot":
             x_col = st.selectbox("X-Axis", data.columns)
             y_col = st.selectbox("Y-Axis", data.columns)
@@ -77,8 +79,42 @@ if section == "Data Visualization":
             plt.figure(figsize=(10, 6))
             sns.boxplot(data=data[col])
             st.pyplot(plt)
+
+        elif plot_type == "Pair Plot":
+            st.write("### Pair Plot")
+            plt.figure(figsize=(10, 6))
+            sns.pairplot(data.select_dtypes(include=[np.number]))
+            st.pyplot(plt)
+
+        elif plot_type == "Bar Plot":
+            x_col = st.selectbox("Category Column (X)", data.select_dtypes(include=['object', 'category']).columns)
+            y_col = st.selectbox("Value Column (Y)", data.select_dtypes(include=[np.number]).columns)
+            plt.figure(figsize=(10, 6))
+            sns.barplot(data=data, x=x_col, y=y_col)
+            st.pyplot(plt)
+
+        elif plot_type == "Line Plot":
+            x_col = st.selectbox("X-Axis (Time/Sequence)", data.columns)
+            y_col = st.selectbox("Y-Axis (Value)", data.select_dtypes(include=[np.number]).columns)
+            plt.figure(figsize=(10, 6))
+            sns.lineplot(data=data, x=x_col, y=y_col)
+            st.pyplot(plt)
+
+        elif plot_type == "Violin Plot":
+            col = st.selectbox("Select Column for Violin Plot", data.select_dtypes(include=[np.number]).columns)
+            plt.figure(figsize=(10, 6))
+            sns.violinplot(data=data, y=col)
+            st.pyplot(plt)
+
+        elif plot_type == "Distribution Plot":
+            col = st.selectbox("Select Column for Distribution Plot", data.select_dtypes(include=[np.number]).columns)
+            plt.figure(figsize=(10, 6))
+            sns.displot(data[col], kde=True, height=6, aspect=1.5)
+            st.pyplot(plt)
+
     else:
-        st.warning("Upload data first!")
+        st.warning("Please upload and clean the data in the 'Upload Data' section first!")
+
 
 if section == "Train Model":
     if 'data' in st.session_state:
