@@ -1,17 +1,4 @@
-# Machine Learning App
-```
-⬆️ (Replace above with your app's name)
-```
 
-Description of the app ...
-
-## Demo App
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
-
-Here's an example of how you can write a `README.md` file for your Streamlit ML app project, including a brief description and how to run the project. This file will provide clear instructions for users to set up and run the app.
-
----
 
 # Streamlit Machine Learning App
 
@@ -95,11 +82,9 @@ This project is open-source and available under the MIT License.
 - [Streamlit](https://streamlit.io/) for making it easy to build interactive apps.
 - [Scikit-learn](https://scikit-learn.org/) for providing a wide variety of machine learning models.
 - [Seaborn](https://seaborn.pydata.org/) for beautiful and informative statistical graphics.
-
+  
 ---
+## Demo App
 
-### Notes:
-- **Replace `<repository_link>` with the actual URL of your repository** if you're hosting this on GitHub or other platforms.
-- **Replace `[Demo Link]` with the actual demo URL** if you have deployed the app on a web platform like Streamlit Cloud or Heroku.
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
 
-This `README.md` provides clear steps for setting up, running, and customizing the app.
