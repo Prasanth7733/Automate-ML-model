@@ -30,7 +30,9 @@ if section == "Upload Data":
             st.write(data.describe())
             st.write("### Null Values:", data.isnull().sum())
         if st.checkbox("Clean Data"):
-            data.fillna(data.mean(), inplace=True)
+            # Fill missing numeric columns with their mean values
+            numeric_columns = data.select_dtypes(include=[np.number]).columns
+            data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
             st.write("Data cleaned!")
             st.write(data.head())
         st.session_state['data'] = data
@@ -63,11 +65,20 @@ if section == "Train Model":
         st.header("Train a Model")
         data = st.session_state['data']
         target_col = st.selectbox("Select Target Column", data.columns)
+        
+        # Select features and target variable
         X = data.drop(columns=[target_col])
         y = data[target_col]
+        
+        # Convert data to NumPy arrays for model compatibility
+        X = X.to_numpy()
+        y = y.to_numpy()
+
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
                                                         "Decision Tree", "Random Forest"])
+        
         if st.button("Train Model"):
             if model_type == "Linear Regression":
                 model = LinearRegression()
@@ -82,17 +93,20 @@ if section == "Train Model":
             elif model_type == "Random Forest":
                 model = RandomForestClassifier()
             
-            model.fit(X_train, y_train)
-            if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-                y_pred = model.predict(X_test)
-                st.write("### R² Score:", r2_score(y_test, y_pred))
-            else:
-                y_pred = model.predict(X_test)
-                st.write("### Accuracy:", accuracy_score(y_test, y_pred))
-                st.write("### Confusion Matrix:")
-                st.write(confusion_matrix(y_test, y_pred))
-            joblib.dump(model, "trained_model.pkl")
-            st.success("Model trained and saved!")
+            try:
+                model.fit(X_train, y_train)
+                if model_type in ["Linear Regression", "Ridge", "Lasso"]:
+                    y_pred = model.predict(X_test)
+                    st.write("### R² Score:", r2_score(y_test, y_pred))
+                else:
+                    y_pred = model.predict(X_test)
+                    st.write("### Accuracy:", accuracy_score(y_test, y_pred))
+                    st.write("### Confusion Matrix:")
+                    st.write(confusion_matrix(y_test, y_pred))
+                joblib.dump(model, "trained_model.pkl")
+                st.success("Model trained and saved!")
+            except ValueError as e:
+                st.error(f"Error during model training: {e}")
     else:
         st.warning("Upload data first!")
 
@@ -108,9 +122,14 @@ if section == "Make Predictions":
         st.write(new_data.head())
         if st.button("Predict"):
             model = joblib.load("trained_model.pkl")
+            
+            # Ensure the new data is in the same format as training data
+            new_data = new_data.to_numpy()
+            
             predictions = model.predict(new_data)
             st.write("### Predictions:")
             st.write(predictions)
+
 
 
 
