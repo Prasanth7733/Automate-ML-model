@@ -13,35 +13,30 @@ st.title("Enhanced Machine Learning App")
 st.sidebar.header("Navigation")
 section = st.sidebar.radio("Go to", ["Upload Data", "Data Visualization", "Train Model", "Evaluate Model", "Make Predictions"])
 
-if section == "Upload Data":
-    st.header("Upload Dataset")
-    uploaded_file = st.file_uploader("Choose a file", type=["csv", "xlsx"])
+if uploaded_file is not None:
+    if uploaded_file.name.endswith('.csv'):
+        data = pd.read_csv(uploaded_file)
+    else:
+        data = pd.read_excel(uploaded_file)
+    st.write("### Dataset Preview")
+    st.write(data.head())
 
-    if uploaded_file:
-        if uploaded_file.name.endswith('.csv'):
-            data = pd.read_csv(uploaded_file)
-        else:
-            data = pd.read_excel(uploaded_file)
+    if st.checkbox("Show Dataset Summary"):
+        st.write(data.describe())
+        st.write("### Null Values:", data.isnull().sum())
 
-        st.write("### Dataset Preview")
+    if st.checkbox("Clean Data"):
+        if st.checkbox("Fill Missing Values with Mean"):
+            data.fillna(data.mean(), inplace=True)
+        if st.checkbox("Drop Rows with Missing Values"):
+            data.dropna(inplace=True)
+        st.write("Data cleaned!")
         st.write(data.head())
 
-        if st.checkbox("Show Dataset Summary"):
-            st.write(data.describe())
-            st.write("### Null Values:", data.isnull().sum())
-
-        # Data Cleaning
-        if st.checkbox("Clean Data"):
-            if st.checkbox("Fill Missing Values with Mean"):
-                data.fillna(data.mean(), inplace=True)
-            if st.checkbox("Drop Rows with Missing Values"):
-                data.dropna(inplace=True)
-
-            st.write("Data cleaned!")
-            st.write(data.head())
-
-        # Save data in session state
-        st.session_state['data'] = data
+    # Save to session state
+    st.session_state['data'] = data
+else:
+    st.warning("Please upload a file to proceed!")
 
 if section == "Data Visualization":
     if 'data' in st.session_state:
