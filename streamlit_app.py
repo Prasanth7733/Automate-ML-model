@@ -116,60 +116,63 @@ if section == "Data Visualization":
     else:
         st.warning("Please upload and clean the data in the 'Upload Data' section first!")
 
+if section == "Train Model":
+    if 'data' in st.session_state:
+        data = st.session_state['data']  # Retrieve uploaded dataset
+        st.header("Train a Model")
+        
+        # Select Target Column
+        target_col = st.selectbox("Select Target Column", data.columns)
 
-if st.button("Train Model"):
-    # Select the target column
-    target_col = st.selectbox("Select Target Column", data.columns)
-    X = data.drop(columns=[target_col])  # Feature matrix
-    y = data[target_col]                # Target variable
+        # Define Features (X) and Target (y)
+        X = data.drop(columns=[target_col])  # Feature matrix
+        y = data[target_col]                # Target variable
 
-    # Handle missing values in X
-    X = X.fillna(method="ffill")  # Forward fill for simplicity (can be customized)
+        # Ensure Data Preprocessing
+        st.write("### Data Preprocessing")
+        st.write("Handling missing values...")
+        X.fillna(X.mean(), inplace=True)  # Example: Fill missing values in X
+        y.fillna(y.mode()[0], inplace=True)  # Fill missing values in y (if categorical)
 
-    # Separate numeric and categorical features
-    numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
-    categorical_features = X.select_dtypes(include=["object", "category"]).columns
+        # Split the data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    st.write("### Feature Summary")
-    st.write("Numeric Features:", numeric_features)
-    st.write("Categorical Features:", categorical_features)
+        # Model Selection and Training
+        model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
+                                                        "Decision Tree", "Random Forest"])
+        model = None
+        if model_type == "Linear Regression":
+            model = LinearRegression()
+        elif model_type == "Logistic Regression":
+            model = LogisticRegression(max_iter=500)
+        elif model_type == "Ridge":
+            model = Ridge()
+        elif model_type == "Lasso":
+            model = Lasso()
+        elif model_type == "Decision Tree":
+            model = DecisionTreeClassifier()
+        elif model_type == "Random Forest":
+            model = RandomForestClassifier()
 
-    # Define preprocessing pipelines
-    numeric_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='mean')),
-        ('scaler', StandardScaler())])
+        # Train and Evaluate
+        if st.button("Train Model"):
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
 
-    categorical_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='most_frequent')),
-        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+            # Evaluation
+            if model_type in ["Linear Regression", "Ridge", "Lasso"]:
+                st.write("### Evaluation Metrics (Regression)")
+                st.write(f"R² Score: {r2_score(y_test, y_pred):.3f}")
+            else:
+                st.write("### Evaluation Metrics (Classification)")
+                st.write(f"Accuracy: {accuracy_score(y_test, y_pred):.3f}")
 
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', numeric_transformer, numeric_features),
-            ('cat', categorical_transformer, categorical_features)])
-
-    # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Preprocess the data
-    X_train_processed = preprocessor.fit_transform(X_train)
-    X_test_processed = preprocessor.transform(X_test)
-
-    # Train the selected model
-    model.fit(X_train_processed, y_train)
-
-    # Make predictions
-    y_pred = model.predict(X_test_processed)
-
-    # Evaluate based on model type
-    if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-        r2 = r2_score(y_test, y_pred)
-        st.write("### Evaluation Metrics (Regression)")
-        st.write(f"R² Score: {r2:.3f}")
+            # Save Model
+            joblib.dump(model, "trained_model.pkl")
+            st.success("Model trained and saved!")
     else:
-        accuracy = accuracy_score(y_test, y_pred)
-        st.write("### Evaluation Metrics (Classification)")
-        st.write(f"Accuracy: {accuracy:.3f}")
+        st.warning("No dataset found. Please upload a dataset in the 'Upload Data' section first.")
+
 
 
 
