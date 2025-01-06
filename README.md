@@ -16,7 +16,7 @@ A simple Streamlit app for uploading datasets, training machine learning models,
 
 1. Clone the repository to your local machine or create a new directory for the app.
    ```bash
-   git clone <repository_link>
+   git clone <https://github.com/Prasanth7733/Automate-ML-model>
    ```
 
 2. Navigate to the project directory.
