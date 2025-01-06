@@ -77,5 +77,5 @@ The project directory contains the following files:
 ---
 ## Demo App
 
-[![Streamlit App](https://automate-ml-model.streamlit.app/)
+[[Streamlit App](https://automate-ml-model.streamlit.app/)
 
