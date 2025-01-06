@@ -16,7 +16,7 @@ import joblib
 st.markdown("""
     <style>
         body {
-            background-color: #f0f8ff;  /* Light blue color */
+            background-color: green;  
         }
     </style>
 """, unsafe_allow_html=True)
