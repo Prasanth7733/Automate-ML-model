@@ -18,25 +18,35 @@ st.title("Simplified Machine Learning App")
 st.sidebar.header("Navigation")
 section = st.sidebar.radio("Go to", ["Upload Data", "Data Visualization", "Train Model", "Make Predictions"])
 
+
 if section == "Upload Data":
     st.header("Upload Dataset")
     uploaded_file = st.file_uploader("Choose a file", type=["csv", "xlsx"])
+
     if uploaded_file:
         if uploaded_file.name.endswith('.csv'):
             data = pd.read_csv(uploaded_file)
         else:
             data = pd.read_excel(uploaded_file)
+
         st.write("### Dataset Preview")
         st.write(data.head())
+
         if st.checkbox("Show Dataset Summary"):
             st.write(data.describe())
             st.write("### Null Values:", data.isnull().sum())
+
+        # Data Cleaning
         if st.checkbox("Clean Data"):
-            # Fill missing numeric columns with their mean values
-            numeric_columns = data.select_dtypes(include=[np.number]).columns
-            data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
+            if st.checkbox("Fill Missing Values with Mean"):
+                data.fillna(data.select_dtypes(include=np.number).mean(), inplace=True)
+            if st.checkbox("Drop Rows with Missing Values"):
+                data.dropna(inplace=True)
+
             st.write("Data cleaned!")
             st.write(data.head())
+
+        # Save data in session state
         st.session_state['data'] = data
 
 if section == "Data Visualization":
