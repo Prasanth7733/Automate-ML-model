@@ -117,112 +117,50 @@ if section == "Data Visualization":
         st.warning("Please upload and clean the data in the 'Upload Data' section first!")
 
 
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.impute import SimpleImputer
+if st.button("Train Model"):
+    # Ensure input data is clean and consistent
+    from sklearn.compose import ColumnTransformer
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler, OneHotEncoder
+    from sklearn.impute import SimpleImputer
 
-if section == "Train Model":
-    if 'data' in st.session_state:
-        st.header("Train a Model")
-        data = st.session_state['data']
-        target_col = st.selectbox("Select Target Column", data.columns)
+    # Preprocess data: handle categorical and numerical columns separately
+    numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
+    categorical_features = X.select_dtypes(include=["object"]).columns
 
-        # Separate features and target
-        X = data.drop(columns=[target_col])
-        y = data[target_col]
+    numeric_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='mean')),
+        ('scaler', StandardScaler())])
 
-        # Identify numeric and categorical columns
-        numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns
-        categorical_cols = X.select_dtypes(include=['object', 'category']).columns
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='most_frequent')),
+        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
 
-        # Define preprocessing for numeric and categorical features
-        numeric_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='mean'))  # Replace missing values with mean
-        ])
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numeric_transformer, numeric_features),
+            ('cat', categorical_transformer, categorical_features)])
 
-        categorical_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='most_frequent')),  # Replace missing values with the most frequent value
-            ('onehot', OneHotEncoder(handle_unknown='ignore'))  # Encode categorical features
-        ])
+    # Apply preprocessor to training data
+    X_train_processed = preprocessor.fit_transform(X_train)
+    X_test_processed = preprocessor.transform(X_test)
 
-        # Combine preprocessors in a column transformer
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ('num', numeric_transformer, numeric_cols),
-                ('cat', categorical_transformer, categorical_cols)
-            ]
-        )
+    # Train the model
+    model.fit(X_train_processed, y_train)
 
-        # Apply preprocessing
-        X = preprocessor.fit_transform(X)
+    # Make predictions
+    y_pred = model.predict(X_test_processed)
 
-        # Encode target column if it's categorical
-        if y.dtype == 'object' or isinstance(y, pd.CategoricalDtype):
-            y = LabelEncoder().fit_transform(y)
-
-        # Train-test split
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-        # Choose Model
-        model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
-                                                        "Decision Tree", "Random Forest"])
-        if st.button("Train Model"):
-            if model_type == "Linear Regression":
-                model = LinearRegression()
-            elif model_type == "Logistic Regression":
-                model = LogisticRegression()
-            elif model_type == "Ridge":
-                model = Ridge()
-            elif model_type == "Lasso":
-                model = Lasso()
-            elif model_type == "Decision Tree":
-                model = DecisionTreeClassifier()
-            elif model_type == "Random Forest":
-                model = RandomForestClassifier()
-
-            # Train the model
-            model.fit(X_train, y_train)
-
-            # Evaluate the model
-            if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-                y_pred = model.predict(X_test)
-                st.write("### R² Score:", r2_score(y_test, y_pred))
-            else:
-                y_pred = model.predict(X_test)
-                st.write("### Accuracy:", accuracy_score(y_test, y_pred))
-                st.write("### Confusion Matrix:")
-                st.write(confusion_matrix(y_test, y_pred))
-
-            # Save the model
-            joblib.dump(model, "trained_model.pkl")
-            st.success("Model trained and saved!")
+    # Evaluate based on model type
+    if model_type in ["Linear Regression", "Ridge", "Lasso"]:
+        r2 = r2_score(y_test, y_pred)
+        st.write("### Evaluation Metrics (Regression)")
+        st.write(f"R² Score: {r2:.3f}")
     else:
-        st.warning("Upload data first!")
+        accuracy = accuracy_score(y_test, y_pred)
+        st.write("### Evaluation Metrics (Classification)")
+        st.write(f"Accuracy: {accuracy:.3f}")
 
-
-
-if section == "Evaluate Model":
-    st.header("Evaluate Model")
-
-    if 'data' in st.session_state:
-        data = st.session_state['data']
-
-        if 'trained_model.pkl' not in globals():
-            model = joblib.load("trained_model.pkl")
-        else:
-            st.error("Train a model first!")
-
-        y_pred = model.predict(X_test)
-
-        if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-            st.write("### R² Score:", r2_score(y_test, y_pred))
-        else:
-            st.write("### Accuracy:", accuracy_score(y_test, y_pred))
-            st.write("### Confusion Matrix:")
-            st.write(confusion_matrix(y_test, y_pred))
-            st.write("### Classification Report:")
-            st.text(classification_report(y_test, y_pred))
 
 if section == "Make Predictions":
     st.header("Make Predictions")
