@@ -93,7 +93,7 @@ if section == "Train Model":
     if 'data' in st.session_state:
         st.header("Train a Model")
         data = st.session_state['data']
-       target_col = st.selectbox("Select Target Column", data.columns)
+        target_col = st.selectbox("Select Target Column", data.columns)
         features = st.multiselect("Select Features (Default: All)", data.columns, default=list(data.columns.drop(target_col)))
 
         X = data[features]
