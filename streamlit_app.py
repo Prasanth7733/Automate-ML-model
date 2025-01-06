@@ -141,24 +141,37 @@ if section == "Train Model":
 if section == "Evaluate Model":
     st.header("Evaluate Model")
 
-    if 'data' in st.session_state:
-        data = st.session_state['data']
-
-        if 'trained_model.pkl' not in globals():
+    # Ensure the trained model and test data exist
+    if 'trained_model.pkl' in globals() or 'trained_model.pkl' in st.session_state:
+        # Load the model
+        if 'trained_model.pkl' in st.session_state:
+            model = st.session_state['trained_model']
+        else:
             model = joblib.load("trained_model.pkl")
-        else:
-            st.error("Train a model first!")
+            st.session_state['trained_model'] = model
 
-        y_pred = model.predict(X_test)
+        # Check if test data exists
+        if 'X_test' in st.session_state and 'y_test' in st.session_state:
+            X_test = st.session_state['X_test']
+            y_test = st.session_state['y_test']
 
-        if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-            st.write("### R² Score:", r2_score(y_test, y_pred))
+            # Make predictions
+            y_pred = model.predict(X_test)
+
+            # Evaluate based on the model type
+            if isinstance(model, (LinearRegression, Ridge, Lasso)):
+                st.write("### R² Score:", r2_score(y_test, y_pred))
+            else:
+                st.write("### Accuracy:", accuracy_score(y_test, y_pred))
+                st.write("### Confusion Matrix:")
+                st.write(confusion_matrix(y_test, y_pred))
+                st.write("### Classification Report:")
+                st.text(classification_report(y_test, y_pred))
         else:
-            st.write("### Accuracy:", accuracy_score(y_test, y_pred))
-            st.write("### Confusion Matrix:")
-            st.write(confusion_matrix(y_test, y_pred))
-            st.write("### Classification Report:")
-            st.text(classification_report(y_test, y_pred))
+            st.error("Test data not available. Train the model first.")
+    else:
+        st.error("No trained model found. Train a model first!")
+
 
 
 
