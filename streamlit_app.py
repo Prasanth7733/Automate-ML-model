@@ -70,7 +70,7 @@ if section == "Data Visualization":
         elif plot_type == "Box Plot":
             col = st.selectbox("Select Column", data.columns)
             plt.figure(figsize=(10, 6))
-            sns.boxplot(data=data[col])
+            sns.boxplot(data[col])
             st.pyplot(plt)
             
     else:
