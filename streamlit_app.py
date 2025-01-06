@@ -117,7 +117,10 @@ if section == "Train Model":
             encoder = LabelEncoder()
             y = encoder.fit_transform(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
+        # Debug Logs
+        st.write("Sample of X_train:")
+        st.write(X_train.head())
+        st.write("Sample of y_train:", y_train[:5])
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso", 
                                                         "Decision Tree", "Random Forest", "SVM", "KNN"])
         
