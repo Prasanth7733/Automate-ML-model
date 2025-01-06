@@ -12,19 +12,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
 
-# Inject custom CSS to change the background color
-st.markdown("""
-    <style>
-        body {
-            background-color: green;  
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("Custom Background Color Streamlit App")
-
-# Your app content here
-st.write("This app has a custom background color!")
 
 
 st.title("Simplified Machine Learning App")
