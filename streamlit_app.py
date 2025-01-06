@@ -79,7 +79,6 @@ if section == "Data Visualization":
             st.pyplot(plt)
     else:
         st.warning("Upload data first!")
-
 if section == "Train Model":
     if 'data' in st.session_state:
         st.header("Train a Model")
@@ -88,7 +87,7 @@ if section == "Train Model":
         # Target Selection
         target_col = st.selectbox("Select Target Column", data.columns)
         features = st.multiselect("Select Features (Default: All)", data.columns, default=list(data.columns.drop(target_col)))
-        
+
         X = data[features]
         y = data[target_col]
 
@@ -104,6 +103,10 @@ if section == "Train Model":
 
         # Split Data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        # Save test data in session state for evaluation
+        st.session_state['X_test'] = X_test
+        st.session_state['y_test'] = y_test
 
         # Model Selection
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
@@ -138,8 +141,9 @@ if section == "Train Model":
             # Train Model
             model.fit(X_train, y_train)
 
-            # Save Model
+            # Save model and type in session state
             joblib.dump(model, "trained_model.pkl")
+            st.session_state['model_type'] = model_type
             st.success("Model trained and saved!")
 
     else:
@@ -148,24 +152,28 @@ if section == "Train Model":
 if section == "Evaluate Model":
     st.header("Evaluate Model")
 
-    if 'data' in st.session_state:
-        data = st.session_state['data']
+    if 'X_test' in st.session_state and 'y_test' in st.session_state:
+        X_test = st.session_state['X_test']
+        y_test = st.session_state['y_test']
+        model_type = st.session_state.get('model_type')
 
-        if 'trained_model.pkl' not in globals():
+        try:
             model = joblib.load("trained_model.pkl")
-        else:
-            st.error("Train a model first!")
+            y_pred = model.predict(X_test)
 
-        y_pred = model.predict(X_test)
+            if model_type in ["Linear Regression", "Ridge", "Lasso"]:
+                st.write("### R² Score:", r2_score(y_test, y_pred))
+            else:
+                st.write("### Accuracy:", accuracy_score(y_test, y_pred))
+                st.write("### Confusion Matrix:")
+                st.write(confusion_matrix(y_test, y_pred))
+                st.write("### Classification Report:")
+                st.text(classification_report(y_test, y_pred))
+        except Exception as e:
+            st.error(f"Error loading model: {e}")
+    else:
+        st.warning("Train a model first!")
 
-        if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-            st.write("### R² Score:", r2_score(y_test, y_pred))
-        else:
-            st.write("### Accuracy:", accuracy_score(y_test, y_pred))
-            st.write("### Confusion Matrix:")
-            st.write(confusion_matrix(y_test, y_pred))
-            st.write("### Classification Report:")
-            st.text(classification_report(y_test, y_pred))
 
 if section == "Make Predictions":
     st.header("Make Predictions")
