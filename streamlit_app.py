@@ -117,70 +117,71 @@ if section == "Data Visualization":
         st.warning("Please upload and clean the data in the 'Upload Data' section first!")
 
 
+from sklearn.preprocessing import LabelEncoder
+from sklearn.impute import SimpleImputer
+
 if section == "Train Model":
     if 'data' in st.session_state:
         st.header("Train a Model")
         data = st.session_state['data']
-
-        # Target Selection
         target_col = st.selectbox("Select Target Column", data.columns)
-        features = st.multiselect("Select Features (Default: All)", data.columns, default=list(data.columns.drop(target_col)))
-        
-        X = data[features]
+
+        # Separate features and target
+        X = data.drop(columns=[target_col])
         y = data[target_col]
 
-        # Preprocessing
-        if st.checkbox("Standardize Features"):
-            scaler = StandardScaler()
-            X = pd.DataFrame(scaler.fit_transform(X), columns=features)
+        # Handle missing values
+        imputer = SimpleImputer(strategy='mean')  # Replace missing values with mean
+        X = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
 
-        # Encoding for Classification Targets
-        if y.dtype == 'object':
-            encoder = LabelEncoder()
-            y = encoder.fit_transform(y)
+        # Encode categorical features
+        for col in X.select_dtypes(include=['object', 'category']).columns:
+            le = LabelEncoder()
+            X[col] = le.fit_transform(X[col])
 
-        # Split Data
+        # Encode target column if it's categorical
+        if y.dtype == 'object' or isinstance(y, pd.CategoricalDtype):
+            y = LabelEncoder().fit_transform(y)
+
+        # Train-test split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Model Selection
+        # Choose Model
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
-                                                        "Decision Tree", "Random Forest", "Gradient Boosting"])
-        hyperparams = {}
-
-        # Hyperparameter Tuning Options
-        if model_type == "Decision Tree" or model_type == "Random Forest":
-            hyperparams['max_depth'] = st.slider("Max Depth", 1, 20, value=5)
-        if model_type == "Random Forest" or model_type == "Gradient Boosting":
-            hyperparams['n_estimators'] = st.slider("Number of Estimators", 10, 200, value=100)
-        if model_type == "Lasso" or model_type == "Ridge":
-            hyperparams['alpha'] = st.slider("Alpha", 0.01, 1.0, value=0.1)
-
+                                                        "Decision Tree", "Random Forest"])
         if st.button("Train Model"):
-            # Model Initialization
             if model_type == "Linear Regression":
                 model = LinearRegression()
             elif model_type == "Logistic Regression":
                 model = LogisticRegression()
             elif model_type == "Ridge":
-                model = Ridge(alpha=hyperparams.get('alpha', 0.1))
+                model = Ridge()
             elif model_type == "Lasso":
-                model = Lasso(alpha=hyperparams.get('alpha', 0.1))
+                model = Lasso()
             elif model_type == "Decision Tree":
-                model = DecisionTreeClassifier(max_depth=hyperparams.get('max_depth', 5))
+                model = DecisionTreeClassifier()
             elif model_type == "Random Forest":
-                model = RandomForestClassifier(n_estimators=hyperparams.get('n_estimators', 100), max_depth=hyperparams.get('max_depth', 5))
-            elif model_type == "Gradient Boosting":
-                model = GradientBoostingClassifier(n_estimators=hyperparams.get('n_estimators', 100), max_depth=hyperparams.get('max_depth', 5))
+                model = RandomForestClassifier()
 
-            # Train Model
+            # Train the model
             model.fit(X_train, y_train)
 
-            # Save Model
+            # Evaluate the model
+            if model_type in ["Linear Regression", "Ridge", "Lasso"]:
+                y_pred = model.predict(X_test)
+                st.write("### R² Score:", r2_score(y_test, y_pred))
+            else:
+                y_pred = model.predict(X_test)
+                st.write("### Accuracy:", accuracy_score(y_test, y_pred))
+                st.write("### Confusion Matrix:")
+                st.write(confusion_matrix(y_test, y_pred))
+
+            # Save the model
             joblib.dump(model, "trained_model.pkl")
             st.success("Model trained and saved!")
-
     else:
         st.warning("Upload data first!")
+
 
 if section == "Evaluate Model":
     st.header("Evaluate Model")
