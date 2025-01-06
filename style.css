@@ -1,0 +1,21 @@
+/* Set a background color for the entire app */
+body {
+    background-color: #f0f8ff;  /* Light blue background */
+}
+
+/* Style the main content area */
+.css-18e3th9 {
+    background-color: #ffffff;  /* White background for content */
+}
+
+/* Style the sidebar */
+.css-1d391kg {
+    background-color: #00aaff; /* Blue sidebar */
+    color: white;               /* White text in the sidebar */
+}
+
+/* Customize Streamlit header */
+h1, h2, h3 {
+    font-family: 'Arial', sans-serif;
+    color: #333333;  /* Dark grey text */
+}
