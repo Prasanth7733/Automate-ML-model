@@ -64,45 +64,12 @@ if section == "Train Model":
         st.header("Train a Model")
         data = st.session_state['data']
         target_col = st.selectbox("Select Target Column", data.columns)
-        
-        # Convert date columns to datetime and extract useful features
-        date_columns = data.select_dtypes(include=['object']).columns
-        for col in date_columns:
-            try:
-                data[col] = pd.to_datetime(data[col], errors='raise')
-            except ValueError:
-                pass  # Skip non-date columns
-
-        for col in date_columns:
-            if pd.api.types.is_datetime64_any_dtype(data[col]):
-                data[f'{col}_year'] = data[col].dt.year
-                data[f'{col}_month'] = data[col].dt.month
-                data[f'{col}_day'] = data[col].dt.day
-                data[f'{col}_dayofweek'] = data[col].dt.dayofweek
-                data[f'{col}_elapsed'] = (data[col] - data[col].min()).dt.days
-                data.drop(columns=[col], inplace=True)
-
-        # One-hot encode categorical columns
-        categorical_columns = data.select_dtypes(include=['object']).columns
-        data = pd.get_dummies(data, columns=categorical_columns, drop_first=True)
-        
-        # Fill missing values in numeric columns
-        numeric_columns = data.select_dtypes(include=[np.number]).columns
-        data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
-        
-        # Select features and target variable
         X = data.drop(columns=[target_col])
         y = data[target_col]
-
-        # Convert data to NumPy arrays
-        X = X.to_numpy()
-        y = y.to_numpy()
-
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso",
                                                         "Decision Tree", "Random Forest"])
-        
+
         if st.button("Train Model"):
             if model_type == "Linear Regression":
                 model = LinearRegression()
@@ -117,22 +84,24 @@ if section == "Train Model":
             elif model_type == "Random Forest":
                 model = RandomForestClassifier()
             
-            try:
-                model.fit(X_train, y_train)
-                if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-                    y_pred = model.predict(X_test)
-                    st.write("### R² Score:", r2_score(y_test, y_pred))
-                else:
-                    y_pred = model.predict(X_test)
-                    st.write("### Accuracy:", accuracy_score(y_test, y_pred))
-                    st.write("### Confusion Matrix:")
-                    st.write(confusion_matrix(y_test, y_pred))
-                joblib.dump(model, "trained_model.pkl")
-                st.success("Model trained and saved!")
-            except ValueError as e:
-                st.error(f"Error during model training: {e}")
-    else:
-        st.warning("Upload data first!")
+            model.fit(X_train, y_train)
+
+            # Save the feature names (columns)
+            feature_names = X_train.columns
+
+            if model_type in ["Linear Regression", "Ridge", "Lasso"]:
+                y_pred = model.predict(X_test)
+                st.write("### R² Score:", r2_score(y_test, y_pred))
+            else:
+                y_pred = model.predict(X_test)
+                st.write("### Accuracy:", accuracy_score(y_test, y_pred))
+                st.write("### Confusion Matrix:")
+                st.write(confusion_matrix(y_test, y_pred))
+
+            # Save the trained model and feature names
+            joblib.dump(model, "trained_model.pkl")
+            joblib.dump(feature_names, "feature_names.pkl")  # Save feature names as a separate file
+            st.success("Model trained and saved!")
 
 if section == "Make Predictions":
     st.header("Make Predictions")
@@ -147,9 +116,10 @@ if section == "Make Predictions":
         st.write(new_data.head())
         
         if st.button("Predict"):
-            # Load the trained model
+            # Load the trained model and feature names
             model = joblib.load("trained_model.pkl")
-            
+            feature_names = joblib.load("feature_names.pkl")  # Load saved feature names
+
             # Preprocess the new data the same way as training data
             # Convert date columns to datetime and extract features
             date_columns = new_data.select_dtypes(include=['object']).columns
@@ -177,11 +147,10 @@ if section == "Make Predictions":
             new_data[numeric_columns] = new_data[numeric_columns].fillna(new_data[numeric_columns].mean())
 
             # Ensure that the new data has the same columns as the training data
-            model_features = model.feature_names_in_  # Features used during training
-            missing_cols = set(model_features) - set(new_data.columns)
+            missing_cols = set(feature_names) - set(new_data.columns)
             for col in missing_cols:
                 new_data[col] = 0  # Add missing columns with default value 0
-            new_data = new_data[model_features]  # Reorder columns to match the training data
+            new_data = new_data[feature_names]  # Reorder columns to match the training data
 
             try:
                 predictions = model.predict(new_data)
@@ -189,6 +158,7 @@ if section == "Make Predictions":
                 st.write(predictions)
             except Exception as e:
                 st.error(f"Error during prediction: {e}")
+
 
 
 
