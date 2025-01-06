@@ -12,6 +12,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
 css_file_path = 'style.css'
+def load_css():
+    with open(css_file_path) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+# Load the CSS
+load_css()
 
 
 st.title("Simplified Machine Learning App")
