@@ -93,9 +93,28 @@ if section == "Train Model":
     if 'data' in st.session_state:
         st.header("Train a Model")
         data = st.session_state['data']
-        target_col = st.selectbox("Select Target Column", data.columns)
-        X = data.drop(columns=[target_col])
+       target_col = st.selectbox("Select Target Column", data.columns)
+        features = st.multiselect("Select Features (Default: All)", data.columns, default=list(data.columns.drop(target_col)))
+
+        X = data[features]
         y = data[target_col]
+
+        # Preprocessing
+        if st.checkbox("Standardize Features"):
+            numeric_cols = X.select_dtypes(include=np.number).columns
+            non_numeric_cols = X.select_dtypes(exclude=np.number).columns
+
+            if not numeric_cols.empty:
+                scaler = StandardScaler()
+                X[numeric_cols] = scaler.fit_transform(X[numeric_cols])
+
+            if not non_numeric_cols.empty:
+                st.warning(f"Non-numeric columns excluded: {list(non_numeric_cols)}")
+                X = X[numeric_cols]
+
+        if y.dtype == 'object':
+            encoder = LabelEncoder()
+            y = encoder.fit_transform(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         
         model_type = st.selectbox("Choose Model Type", ["Linear Regression", "Logistic Regression", "Ridge", "Lasso", 
