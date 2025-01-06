@@ -93,8 +93,16 @@ if section == "Train Model":
 
         # Preprocessing
         if st.checkbox("Standardize Features"):
-            scaler = StandardScaler()
-            X = pd.DataFrame(scaler.fit_transform(X), columns=features)
+            # Select only numeric columns for scaling
+            numeric_cols = X.select_dtypes(include=np.number).columns
+            non_numeric_cols = X.select_dtypes(exclude=np.number).columns
+
+            if not numeric_cols.empty:
+                scaler = StandardScaler()
+                X[numeric_cols] = scaler.fit_transform(X[numeric_cols])
+
+            if not non_numeric_cols.empty:
+                st.warning(f"Non-numeric columns were not standardized: {list(non_numeric_cols)}")
 
         # Encoding for Classification Targets
         if y.dtype == 'object':
@@ -149,30 +157,6 @@ if section == "Train Model":
     else:
         st.warning("Upload data first!")
 
-if section == "Evaluate Model":
-    st.header("Evaluate Model")
-
-    if 'X_test' in st.session_state and 'y_test' in st.session_state:
-        X_test = st.session_state['X_test']
-        y_test = st.session_state['y_test']
-        model_type = st.session_state.get('model_type')
-
-        try:
-            model = joblib.load("trained_model.pkl")
-            y_pred = model.predict(X_test)
-
-            if model_type in ["Linear Regression", "Ridge", "Lasso"]:
-                st.write("### R² Score:", r2_score(y_test, y_pred))
-            else:
-                st.write("### Accuracy:", accuracy_score(y_test, y_pred))
-                st.write("### Confusion Matrix:")
-                st.write(confusion_matrix(y_test, y_pred))
-                st.write("### Classification Report:")
-                st.text(classification_report(y_test, y_pred))
-        except Exception as e:
-            st.error(f"Error loading model: {e}")
-    else:
-        st.warning("Train a model first!")
 
 
 if section == "Make Predictions":
