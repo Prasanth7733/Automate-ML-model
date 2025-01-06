@@ -194,17 +194,3 @@ if section == "Make Predictions":
             except Exception as e:
                 st.error(f"Error during prediction: {e}")
 
-st.write('Hello world!')
-
-
-
-
-st.write('Hello world!')
-
-
-
-
-
-
-
-st.write('Hello world!')
